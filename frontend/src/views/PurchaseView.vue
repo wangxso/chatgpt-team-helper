@@ -173,8 +173,8 @@
               </div>
             </div>
 
-            <div v-if="order.img" class="flex items-center justify-center">
-              <img :src="order.img" alt="支付二维码" class="h-[220px] w-[220px] rounded-xl bg-white p-2" />
+            <div v-if="orderQrImageUrl" class="flex items-center justify-center">
+              <img :src="orderQrImageUrl" alt="支付二维码" class="h-[220px] w-[220px] rounded-xl bg-white p-2" />
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -436,6 +436,18 @@ const openPayUrl = () => {
   if (!url) return
   window.open(url, '_blank')
 }
+
+const buildQrImageUrl = (value: string) => `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(value)}`
+
+const orderQrImageUrl = computed(() => {
+  const currentOrder = order.value
+  if (!currentOrder) return ''
+  const imageUrl = String(currentOrder.img || '').trim()
+  if (imageUrl) return imageUrl
+  const qrText = String(currentOrder.qrcode || '').trim()
+  if (!qrText) return ''
+  return buildQrImageUrl(qrText)
+})
 
 watch(
   () => orderDetail.value?.order?.status,

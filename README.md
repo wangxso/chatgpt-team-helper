@@ -440,9 +440,14 @@ XIANYU_WS_DELIVERY_DRY_RUN=false
 ### 支付网关（Zpay）
 
 ```env
+ZPAY_GATEWAY=easypay
 ZPAY_BASE_URL=https://zpayz.cn
 ZPAY_PID=your-pid
 ZPAY_KEY=your-key
+
+# 码支付（mzfpay）示例
+# ZPAY_GATEWAY=codepay
+# ZPAY_BASE_URL=https://pay.mzfpay.com
 
 # 可选：用于生成支付回调 notify_url 的公网域名
 PUBLIC_BASE_URL=https://你的域名

@@ -286,11 +286,11 @@ onUnmounted(() => {
               <td class="py-3 pr-4 text-gray-600 whitespace-nowrap">{{ formatDate(order.createdAt) }}</td>
               <td class="py-3 pr-0 text-right whitespace-nowrap">
                 <Button
-                  v-if="order.status === 'pending_payment' && order.img"
+                  v-if="order.status === 'pending_payment' && order.payUrl"
                   variant="outline"
                   size="sm"
                   class="h-8 text-xs border-gray-200 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  @click="openPayUrl(order.img)"
+                  @click="openPayUrl(order.payUrl)"
                 >
                   <Link2 class="h-3 w-3 mr-1.5" />
                   去付款

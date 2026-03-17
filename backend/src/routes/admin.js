@@ -772,8 +772,10 @@ router.get('/zpay-settings', async (req, res) => {
 
     res.json({
       zpay: {
+        gateway: String(settings.gateway || 'easypay'),
         baseUrl: String(settings.baseUrl || ''),
         pid: String(settings.pid || ''),
+        gatewayStored: Boolean(settings.stored?.gateway),
         baseUrlStored: Boolean(settings.stored?.baseUrl),
         pidStored: Boolean(settings.stored?.pid),
         keySet: Boolean(String(settings.key || '').trim()),
@@ -793,6 +795,8 @@ router.put('/zpay-settings', async (req, res) => {
 
     const current = await getZpaySettings(db, { forceRefresh: true })
     const env = getZpaySettingsFromEnv()
+    const gatewayRaw = String(payload.gateway ?? current.gateway ?? env.gateway ?? 'easypay').trim().toLowerCase()
+    const gateway = gatewayRaw === 'codepay' || gatewayRaw === 'mzfpay' ? 'codepay' : 'easypay'
 
     const baseUrlRaw = String(payload.baseUrl ?? current.baseUrl ?? '').trim()
     let baseUrl = baseUrlRaw
@@ -829,6 +833,7 @@ router.put('/zpay-settings', async (req, res) => {
       if (!key) return res.status(400).json({ error: 'ZPAY key is required' })
     }
 
+    upsertSystemConfigValue(db, 'zpay_gateway', gateway)
     upsertSystemConfigValue(db, 'zpay_base_url', baseUrl)
     upsertSystemConfigValue(db, 'zpay_pid', pid)
     if (shouldUpsertKey) {
@@ -841,8 +846,10 @@ router.put('/zpay-settings', async (req, res) => {
     const updated = await getZpaySettings(db, { forceRefresh: true })
     res.json({
       zpay: {
+        gateway: String(updated.gateway || 'easypay'),
         baseUrl: String(updated.baseUrl || ''),
         pid: String(updated.pid || ''),
+        gatewayStored: Boolean(updated.stored?.gateway),
         baseUrlStored: Boolean(updated.stored?.baseUrl),
         pidStored: Boolean(updated.stored?.pid),
         keySet: Boolean(String(updated.key || '').trim()),

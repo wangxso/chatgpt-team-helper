@@ -71,7 +71,43 @@ const getPublicBaseUrl = (req) => {
   const protoHeader = req.headers['x-forwarded-proto']
   const protocol = typeof protoHeader === 'string' && protoHeader.trim() ? protoHeader.split(',')[0].trim() : req.protocol
   const host = req.get('host')
-  return `https://${host}`
+  return `${protocol}://${host}`
+}
+
+const getRequestOrigin = (req) => {
+  const origin = String(req.headers.origin || '').trim()
+  if (!origin) return ''
+  try {
+    return new URL(origin).origin
+  } catch {
+    return ''
+  }
+}
+
+const getPurchaseNotifyUrl = (req) => {
+  const configured = String(process.env.PURCHASE_NOTIFY_URL || '').trim()
+  if (configured) return configured
+  return `${getPublicBaseUrl(req)}/notify`
+}
+
+const getPurchaseReturnUrl = (req, { orderNo, email } = {}) => {
+  const configured = String(process.env.PURCHASE_RETURN_URL || '').trim()
+  const origin = getRequestOrigin(req)
+  const base = configured || origin
+  if (!base) return getPurchaseNotifyUrl(req)
+
+  try {
+    const target = new URL(base)
+    if (!configured) {
+      target.pathname = '/order'
+      target.search = ''
+    }
+    if (orderNo) target.searchParams.set('orderNo', String(orderNo).trim())
+    if (email) target.searchParams.set('email', String(email).trim())
+    return target.toString()
+  } catch {
+    return configured || getPurchaseNotifyUrl(req)
+  }
 }
 
 const md5 = (value) => crypto.createHash('md5').update(String(value), 'utf8').digest('hex')
@@ -244,9 +280,45 @@ const getPurchaseOrderRewardPoints = () => Math.max(0, toInt(process.env.PURCHAS
 const getZpayConfig = async (db, options) => {
   const settings = await getZpaySettings(db, options)
   return {
+    gateway: String(settings.gateway || 'easypay').trim().toLowerCase() === 'codepay' ? 'codepay' : 'easypay',
     pid: String(settings.pid || '').trim(),
     key: String(settings.key || '').trim(),
     baseUrl: String(settings.baseUrl || '').trim().replace(/\/+$/, '') || 'https://zpayz.cn'
+  }
+}
+
+const normalizeGatewayCreateOrderResult = (gateway, data) => {
+  const payload = data && typeof data === 'object' ? data : {}
+  const normalizedGateway = String(gateway || 'easypay').trim().toLowerCase()
+  const code = payload.code != null ? String(payload.code) : ''
+  const status = payload.status != null ? String(payload.status) : ''
+  const normalizeNullableString = (value) => {
+    const text = String(value ?? '').trim()
+    return text || null
+  }
+  const isImageLikeUrl = (value) => {
+    const text = String(value ?? '').trim()
+    if (!text) return false
+    if (text.startsWith('data:image/')) return true
+    return /^https?:\/\/.+\.(png|jpg|jpeg|gif|webp|svg)(\?.*)?$/i.test(text)
+  }
+  const ok = normalizedGateway === 'codepay'
+    ? ['1', 'success', 'ok'].includes(status.toLowerCase()) || code === '1'
+    : code === '1'
+  const payUrl = normalizeNullableString(payload.payurl || payload.pay_url || payload.submit_url || payload.payment_url)
+  const qrcode = normalizeNullableString(payload.qrcode || payload.code_url || payload.qr_code)
+  const rawImg = normalizeNullableString(payload.img)
+
+  return {
+    ok,
+    oid: payload.O_id || payload.oid || payload.order_id || payload.orderid || null,
+    tradeNo: payload.trade_no || payload.tradeNo || null,
+    payUrl,
+    qrcode,
+    img: isImageLikeUrl(rawImg) ? rawImg : null,
+    code,
+    status,
+    msg: payload.msg ? String(payload.msg) : payload.error_msg ? String(payload.error_msg) : ''
   }
 }
 
@@ -660,7 +732,7 @@ const summarizeZpayNotifyPayload = (payload) => {
 }
 
 const queryZpayOrder = async ({ tradeNo, outTradeNo }) => {
-  const { pid, key, baseUrl } = await getZpayConfig()
+  const { gateway, pid, key, baseUrl } = await getZpayConfig()
   if (!pid || !key) {
     return { ok: false, error: 'missing_config' }
   }
@@ -731,7 +803,7 @@ const queryZpayOrder = async ({ tradeNo, outTradeNo }) => {
 }
 
 const refundZpayOrder = async ({ outTradeNo, tradeNo, money }) => {
-  const { pid, key, baseUrl } = await getZpayConfig()
+  const { gateway, pid, key, baseUrl } = await getZpayConfig()
   if (!pid || !key) {
     return { ok: false, error: 'missing_config' }
   }
@@ -1182,7 +1254,7 @@ router.post('/orders', async (req, res) => {
     return res.status(400).json({ error: 'productKey 不合法' })
   }
 
-  const { pid, key, baseUrl } = await getZpayConfig()
+  const { gateway, pid, key, baseUrl } = await getZpayConfig()
   if (!pid || !key) {
     console.warn('[Purchase] missing zpay config', { hasPid: !!pid, hasKey: !!key })
     return res.status(500).json({ error: '支付未配置，请联系管理员' })
@@ -1278,14 +1350,15 @@ router.post('/orders', async (req, res) => {
     const productKeyUsed = reservation.product.productKey
 
     // ZPAY 异步通知为 GET，会把支付结果参数拼在 notify_url 后面（示例：/notify?pid=...&trade_no=...）
-    const notifyUrl = `${getPublicBaseUrl(req)}/notify`
+    const notifyUrl = getPurchaseNotifyUrl(req)
+    const returnUrl = getPurchaseReturnUrl(req, { orderNo, email })
 
     const payParams = {
       pid,
       type: payType,
       out_trade_no: orderNo,
       notify_url: notifyUrl,
-      return_url: notifyUrl,
+      return_url: returnUrl,
       name: purchasePlan.productName,
       money: purchasePlan.amount,
       clientip: getClientIp(req),
@@ -1293,11 +1366,23 @@ router.post('/orders', async (req, res) => {
       param: `email=${email}`
     }
 
+    console.info('[Purchase] create order request prepared', {
+      orderNo,
+      gateway,
+      payType,
+      amount: purchasePlan.amount,
+      notifyUrl,
+      returnUrl
+    })
+
     const sign = buildZpaySign({ ...payParams, sign_type: 'MD5' }, key)
     const form = new URLSearchParams()
     Object.entries({ ...payParams, sign, sign_type: 'MD5' }).forEach(([k, v]) => form.append(k, String(v)))
 
-    const zpayResponse = await axios.post(`${baseUrl}/mapi.php`, form, {
+    // mzfpay 这类码支付兼容网关的服务端 API 下单同样使用 mapi.php；
+    // /pay/apisubmit 在当前对接目标上会返回 404。
+    const createOrderUrl = `${baseUrl}/mapi.php`
+    const zpayResponse = await axios.post(createOrderUrl, form, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       timeout: 15000,
       validateStatus: () => true
@@ -1338,21 +1423,28 @@ router.post('/orders', async (req, res) => {
       return res.status(502).json({ error: msg })
     }
 
-    if (!data || String(data.code) !== '1') {
-      const codeValue = data?.code != null ? String(data.code) : ''
-      const msg = data?.msg
-        ? String(data.msg)
+    const createResult = normalizeGatewayCreateOrderResult(gateway, data)
+
+    if (!data || !createResult.ok) {
+      const codeValue = createResult.code || (data?.code != null ? String(data.code) : '')
+      const statusValue = createResult.status || (data?.status != null ? String(data.status) : '')
+      const msg = createResult.msg
+        ? String(createResult.msg)
         : codeValue
           ? `支付下单失败（code=${codeValue}）`
-          : rawText
-            ? '支付下单失败（响应格式异常）'
-            : '支付下单失败'
+          : statusValue
+            ? `支付下单失败（status=${statusValue}）`
+            : rawText
+              ? '支付下单失败（响应格式异常）'
+              : '支付下单失败'
 
       console.warn('[Purchase] zpay create failed', {
         orderNo,
+        gateway,
         contentType,
         parsedCode: codeValue || null,
-        parsedMsg: data?.msg ? String(data.msg) : null,
+        parsedStatus: statusValue || null,
+        parsedMsg: createResult.msg || (data?.msg ? String(data.msg) : null),
         bodySnippet: safeSnippet(rawText || data)
       })
       await withLocks([`purchase:${orderNo}`], async () => {
@@ -1389,7 +1481,7 @@ router.post('/orders', async (req, res) => {
             updated_at = DATETIME('now', 'localtime')
         WHERE order_no = ?
       `,
-      [data.O_id || null, data.trade_no || null, data.payurl || null, data.qrcode || null, data.img || null, orderNo]
+      [createResult.oid, createResult.tradeNo, createResult.payUrl, createResult.qrcode, createResult.img, orderNo]
     )
     saveDatabase()
 
@@ -1400,9 +1492,9 @@ router.post('/orders', async (req, res) => {
       orderType,
       productKey: productKeyUsed,
       payType,
-      payUrl: data.payurl || null,
-      qrcode: data.qrcode || null,
-      img: data.img || null
+      payUrl: createResult.payUrl,
+      qrcode: createResult.qrcode,
+      img: createResult.img
     })
   } catch (error) {
     console.error('[Purchase] create order error:', {

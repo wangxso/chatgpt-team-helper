@@ -108,7 +108,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import RedeemShell from '@/components/RedeemShell.vue'
 import AppleCard from '@/components/ui/apple/Card.vue'
 import AppleInput from '@/components/ui/apple/Input.vue'
@@ -117,6 +118,7 @@ import { purchaseService, type PurchaseOrderQueryResponse } from '@/services/api
 import { EMAIL_REGEX } from '@/lib/validation'
 import { AlertCircle } from 'lucide-vue-next'
 
+const route = useRoute()
 const email = ref('')
 const orderNo = ref('')
 const loading = ref(false)
@@ -166,6 +168,16 @@ const handleQuery = async () => {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  const routeEmail = String(route.query.email || '').trim()
+  const routeOrderNo = String(route.query.orderNo || '').trim()
+  if (routeEmail && !email.value) email.value = routeEmail
+  if (routeOrderNo && !orderNo.value) orderNo.value = routeOrderNo
+  if (routeEmail && routeOrderNo) {
+    void handleQuery()
+  }
+})
 </script>
 
 <style scoped>

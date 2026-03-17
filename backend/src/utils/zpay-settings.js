@@ -1,7 +1,8 @@
 import { getDatabase } from '../database/init.js'
 
-const CONFIG_KEYS = ['zpay_base_url', 'zpay_pid', 'zpay_key']
+const CONFIG_KEYS = ['zpay_gateway', 'zpay_base_url', 'zpay_pid', 'zpay_key']
 const DEFAULT_ZPAY_BASE_URL = 'https://zpayz.cn'
+const DEFAULT_ZPAY_GATEWAY = 'easypay'
 
 const CACHE_TTL_MS = 60 * 1000
 let cachedSettings = null
@@ -11,6 +12,12 @@ const normalizeBaseUrl = (value) => {
   const raw = String(value || '').trim()
   const normalized = raw.replace(/\/+$/, '')
   return normalized || DEFAULT_ZPAY_BASE_URL
+}
+
+const normalizeGateway = (value) => {
+  const normalized = String(value || '').trim().toLowerCase()
+  if (normalized === 'codepay' || normalized === 'mzfpay') return 'codepay'
+  return DEFAULT_ZPAY_GATEWAY
 }
 
 const loadSystemConfigMap = (database, keys) => {
@@ -30,6 +37,7 @@ const loadSystemConfigMap = (database, keys) => {
 }
 
 export const getZpaySettingsFromEnv = () => ({
+  gateway: normalizeGateway(process.env.ZPAY_GATEWAY || DEFAULT_ZPAY_GATEWAY),
   baseUrl: normalizeBaseUrl(process.env.ZPAY_BASE_URL || DEFAULT_ZPAY_BASE_URL),
   pid: String(process.env.ZPAY_PID || '').trim(),
   key: String(process.env.ZPAY_KEY || '').trim()
@@ -57,15 +65,18 @@ export async function getZpaySettings(db, { forceRefresh = false } = {}) {
 
   const resolveTrimmedString = (key, fallback) => String(resolveString(key, fallback) ?? '').trim()
 
+  const gateway = normalizeGateway(resolveTrimmedString('zpay_gateway', env.gateway))
   const baseUrlRaw = resolveTrimmedString('zpay_base_url', env.baseUrl)
   const pid = resolveTrimmedString('zpay_pid', env.pid)
   const key = String(resolveString('zpay_key', env.key) ?? '').trim()
 
   cachedSettings = {
+    gateway,
     baseUrl: normalizeBaseUrl(baseUrlRaw),
     pid,
     key,
     stored: {
+      gateway: stored.has('zpay_gateway'),
       baseUrl: stored.has('zpay_base_url'),
       pid: stored.has('zpay_pid'),
       key: stored.has('zpay_key') && Boolean(String(stored.get('zpay_key') ?? '').trim())
@@ -74,4 +85,3 @@ export async function getZpaySettings(db, { forceRefresh = false } = {}) {
   cachedAt = now
   return cachedSettings
 }
-

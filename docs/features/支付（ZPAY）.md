@@ -12,14 +12,19 @@
 
 禁用时相关页面与接口会返回 `403`（`FEATURE_DISABLED`）。
 
-## 2) 配置 ZPAY 参数
+## 2) 配置支付网关参数
 
 推荐在管理后台配置并入库：
 - 进入：`/admin/settings` →「ZPAY 支付配置」
 - 填写：
+  - `ZPAY_GATEWAY`
   - `ZPAY_BASE_URL`
   - `ZPAY_PID`
   - `ZPAY_KEY`
+
+常见配置：
+- 易支付兼容：`ZPAY_GATEWAY=easypay`，`ZPAY_BASE_URL=https://zpayz.cn`
+- 码支付（mzfpay）：`ZPAY_GATEWAY=codepay`，`ZPAY_BASE_URL=https://pay.mzfpay.com`
 
 ## 3) 配置公网回调域名（生产环境强烈建议）
 

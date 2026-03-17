@@ -200,6 +200,7 @@ const linuxdoCreditLoading = ref(false)
 const showLinuxdoCreditKey = ref(false)
 
 // ZPAY 支付配置（仅超级管理员）
+const zpayGateway = ref<'easypay' | 'codepay'>('easypay')
 const zpayBaseUrl = ref('https://zpayz.cn')
 const zpayPid = ref('')
 const zpayKey = ref('')
@@ -820,6 +821,7 @@ const loadZpaySettings = async () => {
   zpaySuccess.value = ''
   try {
     const response = await adminService.getZpaySettings()
+    zpayGateway.value = response.zpay?.gateway === 'codepay' ? 'codepay' : 'easypay'
     zpayBaseUrl.value = response.zpay?.baseUrl || 'https://zpayz.cn'
     zpayPid.value = response.zpay?.pid || ''
     zpayKey.value = ''
@@ -859,11 +861,12 @@ const saveZpaySettings = async () => {
 
   zpayLoading.value = true
   try {
-    const payload: any = { zpay: { baseUrl, pid } }
+    const payload: any = { zpay: { gateway: zpayGateway.value, baseUrl, pid } }
     if (keyTrimmed) {
       payload.zpay.key = keyTrimmed
     }
     const response = await adminService.updateZpaySettings(payload)
+    zpayGateway.value = response.zpay?.gateway === 'codepay' ? 'codepay' : zpayGateway.value
     zpayBaseUrl.value = response.zpay?.baseUrl || baseUrl || 'https://zpayz.cn'
     zpayPid.value = response.zpay?.pid || pid
     zpayKey.value = ''
@@ -2156,11 +2159,24 @@ const savePointsWithdrawSettings = async () => {
       <template v-if="settingsSubTab === 'billing'">
       <Card v-if="isSuperAdmin" class="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden flex flex-col lg:col-span-2">
         <CardHeader class="border-b border-gray-50 bg-gray-50/30 px-6 py-5 sm:px-8 sm:py-6">
-          <CardTitle class="text-xl font-bold text-gray-900">ZPAY 支付配置</CardTitle>
-          <CardDescription class="text-gray-500">用于购买下单与回调验签（保存后实时生效）。</CardDescription>
+          <CardTitle class="text-xl font-bold text-gray-900">支付网关配置</CardTitle>
+          <CardDescription class="text-gray-500">用于购买下单与回调验签，支持易支付兼容网关和码支付接口。</CardDescription>
         </CardHeader>
         <CardContent class="p-6 sm:p-8 space-y-6 flex-1">
-          <div class="grid gap-4 lg:grid-cols-3">
+          <div class="grid gap-4 lg:grid-cols-4">
+            <div class="space-y-2 lg:col-span-1">
+              <Label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gateway</Label>
+              <Select v-model="zpayGateway" :disabled="zpayLoading">
+                <SelectTrigger class="h-11 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all text-sm">
+                  <SelectValue placeholder="选择支付网关" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easypay">易支付兼容</SelectItem>
+                  <SelectItem value="codepay">码支付</SelectItem>
+                </SelectContent>
+              </Select>
+              <p class="text-xs text-gray-400">码支付推荐配置 `https://pay.mzfpay.com`。</p>
+            </div>
             <div class="space-y-2 lg:col-span-1">
               <Label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Base URL</Label>
               <Input
@@ -2170,14 +2186,14 @@ const savePointsWithdrawSettings = async () => {
                 class="h-11 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all font-mono text-sm"
                 :disabled="zpayLoading"
               />
-              <p class="text-xs text-gray-400">示例：https://zpayz.cn（无需以 / 结尾）</p>
+              <p class="text-xs text-gray-400">示例：易支付 `https://zpayz.cn`；码支付 `https://pay.mzfpay.com`。</p>
             </div>
             <div class="space-y-2 lg:col-span-1">
               <Label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">PID</Label>
               <Input
                 v-model="zpayPid"
                 type="text"
-                placeholder="ZPAY PID"
+                placeholder="支付商户 PID"
                 class="h-11 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-500 transition-all font-mono text-sm"
                 :disabled="zpayLoading"
               />
@@ -2234,7 +2250,7 @@ const savePointsWithdrawSettings = async () => {
               :disabled="zpayLoading"
               @click="saveZpaySettings"
             >
-              {{ zpayLoading ? '保存中...' : '保存 ZPAY 配置' }}
+              {{ zpayLoading ? '保存中...' : '保存支付网关配置' }}
             </Button>
           </div>
         </CardContent>
