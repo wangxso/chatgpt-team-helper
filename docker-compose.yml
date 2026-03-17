@@ -2,9 +2,12 @@ version: '3.8'
 
 services:
   app:
-    image: ghcr.io/kylsky/chatgpt-team-helper:latest
-    # 或使用本地构建: image: auto-gpt-team:latest
-    # image: auto-gpt-team:latest
+    # 使用远程预构建镜像（默认）
+    # image: ghcr.io/kylsky/chatgpt-team-helper:latest
+    # 本地构建
+    build:
+      context: .
+    image: chatgpt-team-helper:latest
     container_name: auto-gpt-team
     ports:
       - "5173:5173" # 前端 Web 端口（API 通过 nginx 代理，无需暴露 3000）
