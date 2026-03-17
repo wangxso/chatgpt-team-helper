@@ -30,6 +30,7 @@ import UserInfoView from '../views/UserInfoView.vue'
 import PointsExchangeView from '../views/PointsExchangeView.vue'
 import RoleManagementView from '../views/RoleManagementView.vue'
 import MenuManagementView from '../views/MenuManagementView.vue'
+import HomeView from '../views/HomeView.vue'
 import { authService } from '@/services/api'
 import FeatureDisabledView from '../views/FeatureDisabledView.vue'
 import { useAppConfigStore } from '@/stores/appConfig'
@@ -40,7 +41,9 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login',
+      name: 'home',
+      component: HomeView,
+      meta: { featureKey: 'payment' },
     },
     {
       path: '/feature-disabled/:feature',
