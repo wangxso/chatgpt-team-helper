@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /order
+Disallow: /redeem/
+Disallow: /waiting-room
+Disallow: /feature-disabled/
+Disallow: /api/
+Disallow: /notify
+Disallow: /credit/
+
+Sitemap: https://team.wangxso.com/sitemap.xml

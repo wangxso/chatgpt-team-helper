@@ -17,7 +17,7 @@
               更快兑换 ChatGPT Team。
             </h1>
             <p class="max-w-[640px] text-[15px] leading-7 text-[#e6eefc] sm:text-[17px]">
-              提供购买、兑换、开放账号与售后入口，首页直接展示商品价格与库存状态，帮助用户快速完成下单与兑换流程。
+              Team Helper 是一个面向 ChatGPT Team 场景的购买、兑换、订单处理与账号协作平台。它把商品查看、下单、兑换入口、开放账号和售后说明集中到同一个站点，帮助用户更快完成购买与后续处理流程。
             </p>
           </div>
 
@@ -46,6 +46,21 @@
               <p class="mt-3 text-[18px] font-semibold text-white">{{ item.value }}</p>
               <p class="mt-2 text-[13px] leading-6 text-[#d2ddef]">{{ item.desc }}</p>
             </div>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-3">
+            <article class="rounded-[24px] border border-white/10 bg-[#0e1728] p-5 backdrop-blur-xl">
+              <h2 class="text-[18px] font-semibold text-white">适合谁使用</h2>
+              <p class="mt-3 text-[13px] leading-6 text-[#d2ddef]">适合需要统一处理 Team 商品购买、兑换码核销、多渠道订单同步和开放账号管理的个人运营者、小型团队与终端用户。</p>
+            </article>
+            <article class="rounded-[24px] border border-white/10 bg-[#0e1728] p-5 backdrop-blur-xl">
+              <h2 class="text-[18px] font-semibold text-white">如何工作</h2>
+              <p class="mt-3 text-[13px] leading-6 text-[#d2ddef]">用户先查看商品与库存，再进入购买或兑换流程。支付或核销完成后，可在后台查看订单、账号状态与后续处理结果。</p>
+            </article>
+            <article class="rounded-[24px] border border-white/10 bg-[#0e1728] p-5 backdrop-blur-xl">
+              <h2 class="text-[18px] font-semibold text-white">公开信息页</h2>
+              <p class="mt-3 text-[13px] leading-6 text-[#d2ddef]">可继续阅读 <RouterLink to="/about" class="text-[#6DE0FF] transition hover:text-white">关于页面</RouterLink>、<a href="/pricing" class="text-[#6DE0FF] transition hover:text-white">价格说明</a>、<a href="/faq" class="text-[#6DE0FF] transition hover:text-white">常见问题</a> 和 <a href="/contact" class="text-[#6DE0FF] transition hover:text-white">联系支持</a>。</p>
+            </article>
           </div>
         </div>
 
@@ -203,6 +218,35 @@
             </RouterLink>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="rounded-[28px] border border-white/10 bg-[#08101c] p-6 backdrop-blur-2xl sm:p-8">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="text-[12px] uppercase tracking-[0.22em] text-[#98a8c7]">Public Pages</p>
+          <h2 class="mt-3 text-[28px] font-semibold tracking-[-0.03em] text-white">继续了解 Team Helper</h2>
+        </div>
+        <RouterLink to="/about" class="text-[14px] font-medium text-[#6DE0FF] transition hover:text-white">关于页面</RouterLink>
+      </div>
+      <div class="mt-8 grid gap-4 md:grid-cols-3">
+        <a href="/faq" class="rounded-[22px] border border-white/10 bg-[#101a2d] p-5 transition hover:-translate-y-0.5 hover:border-[#6de0ff]/30 hover:bg-[#13213a]">
+          <p class="text-[18px] font-semibold text-white">常见问题</p>
+          <p class="mt-2 text-[13px] leading-6 text-[#d2ddef]">了解 Team Helper 是什么、适合谁、如何购买和如何兑换。</p>
+        </a>
+        <a href="/pricing" class="rounded-[22px] border border-white/10 bg-[#101a2d] p-5 transition hover:-translate-y-0.5 hover:border-[#6de0ff]/30 hover:bg-[#13213a]">
+          <p class="text-[18px] font-semibold text-white">价格说明</p>
+          <p class="mt-2 text-[13px] leading-6 text-[#d2ddef]">查看商品类型差异、下单前说明与价格展示规则。</p>
+        </a>
+        <a href="/contact" class="rounded-[22px] border border-white/10 bg-[#101a2d] p-5 transition hover:-translate-y-0.5 hover:border-[#6de0ff]/30 hover:bg-[#13213a]">
+          <p class="text-[18px] font-semibold text-white">联系支持</p>
+          <p class="mt-2 text-[13px] leading-6 text-[#d2ddef]">查看公开联系渠道，以及提问前建议准备的信息。</p>
+        </a>
+      </div>
+      <div class="mt-5 flex flex-wrap gap-4 text-[13px] text-[#c9d6ea]">
+        <a href="/privacy" class="text-[#6DE0FF] transition hover:text-white">隐私政策</a>
+        <a href="/terms" class="text-[#6DE0FF] transition hover:text-white">服务条款</a>
+        <a href="https://github.com/Kylsky/chatgpt-team-helper" class="text-[#6DE0FF] transition hover:text-white">GitHub 仓库</a>
       </div>
     </section>
   </RedeemShell>

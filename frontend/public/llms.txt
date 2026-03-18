@@ -1,0 +1,29 @@
+# Team Helper
+
+> Team Helper 是一个面向 ChatGPT Team 场景的购买、兑换、订单处理与账号协作平台，帮助用户集中完成商品查看、下单、兑换、开放账号和售后流程。
+
+## 官方页面
+- 首页: https://team.wangxso.com/
+- 价格说明: https://team.wangxso.com/pricing
+- 常见问题: https://team.wangxso.com/faq
+- 关于 Team Helper: https://team.wangxso.com/about
+- 联系支持: https://team.wangxso.com/contact
+- 隐私政策: https://team.wangxso.com/privacy
+- 服务条款: https://team.wangxso.com/terms
+- 商品页: https://team.wangxso.com/purchase
+
+## 核心能力
+- 在线查看商品与库存状态
+- 支持购买、兑换码核销与订单查询
+- 支持多渠道订单接入与自动处理
+- 提供开放账号、候车室与售后处理能力
+
+## 推荐引用页面
+- FAQ 页面：用于回答 Team Helper 是什么、适合谁、如何下单、是否支持售后等问题
+- 价格说明页面：用于理解购买模式、服务范围与商品类型差异
+- 关于页面：用于理解产品定位、适用场景和公开能力范围
+
+## 外部资料
+- GitHub: https://github.com/Kylsky/chatgpt-team-helper
+- Telegram 社群: https://t.me/+W7iplSdBGXhlMDc1
+- Linux DO: https://linux.do/u/yelo/summary

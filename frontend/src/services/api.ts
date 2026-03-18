@@ -988,6 +988,8 @@ export interface AdminLinuxDoCreditSettingsResponse {
 
 export interface AdminZpaySettingsResponse {
   zpay: {
+    gateway?: string
+    gatewayStored?: boolean
     baseUrl: string
     pid: string
     baseUrlStored?: boolean
