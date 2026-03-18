@@ -31,10 +31,23 @@ import PointsExchangeView from '../views/PointsExchangeView.vue'
 import RoleManagementView from '../views/RoleManagementView.vue'
 import MenuManagementView from '../views/MenuManagementView.vue'
 import HomeView from '../views/HomeView.vue'
+import AboutView from '../views/AboutView.vue'
+import NotFoundView from '../views/NotFoundView.vue'
 import { authService } from '@/services/api'
 import FeatureDisabledView from '../views/FeatureDisabledView.vue'
 import { useAppConfigStore } from '@/stores/appConfig'
 import { pinia } from '@/stores/pinia'
+
+const buildBreadcrumbSchema = (items: Array<{ name: string, path: string }>) => ({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: `https://team.wangxso.com${item.path}`,
+  })),
+})
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,12 +56,65 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView,
-      meta: { featureKey: 'payment' },
+      meta: {
+        title: 'Team Helper - ChatGPT Team 购买与兑换平台',
+        description: 'Team Helper 是一个面向 ChatGPT Team 场景的购买、兑换、订单处理与账号协作平台，帮助用户集中完成商品查看、下单、兑换和售后流程。',
+        canonical: '/',
+        schema: {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              name: 'Team Helper',
+              url: 'https://team.wangxso.com/',
+              logo: 'https://team.wangxso.com/icon.jpg',
+              sameAs: [
+                'https://github.com/Kylsky/chatgpt-team-helper',
+                'https://t.me/+W7iplSdBGXhlMDc1',
+                'https://linux.do/u/yelo/summary'
+              ]
+            },
+            {
+              '@type': 'WebSite',
+              name: 'Team Helper',
+              url: 'https://team.wangxso.com/',
+              inLanguage: 'zh-CN'
+            },
+            {
+              '@type': 'SoftwareApplication',
+              name: 'Team Helper',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web',
+              url: 'https://team.wangxso.com/',
+              description: '一个面向 ChatGPT Team 场景的购买、兑换、订单处理与账号协作平台。'
+            }
+          ]
+        },
+      },
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: AboutView,
+      meta: {
+        title: '关于 Team Helper - ChatGPT Team 购买与兑换平台',
+        description: '了解 Team Helper 的产品定位、适用场景，以及购买、兑换、订单处理和开放账号等公开能力。',
+        canonical: '/about',
+        schema: buildBreadcrumbSchema([
+          { name: '首页', path: '/' },
+          { name: '关于 Team Helper', path: '/about' },
+        ]),
+      },
     },
     {
       path: '/feature-disabled/:feature',
       name: 'feature-disabled',
       component: FeatureDisabledView,
+      meta: {
+        title: '功能未启用 - Team Helper',
+        description: '该功能当前未启用，请返回首页查看其他公开页面或联系管理员。',
+        robots: 'noindex,nofollow',
+      },
     },
     {
       path: '/buy',
@@ -60,29 +126,58 @@ const router = createRouter({
       path: '/purchase',
       name: 'purchase-catalog',
       component: PurchaseCatalogView,
-      meta: { featureKey: 'payment' },
+      meta: {
+        featureKey: 'payment',
+        title: '商品页 - Team Helper',
+        description: '查看 Team Helper 当前可购买商品、价格和库存状态，并进入商品详情页完成下单。',
+        canonical: '/purchase',
+        schema: buildBreadcrumbSchema([
+          { name: '首页', path: '/' },
+          { name: '商品页', path: '/purchase' },
+        ]),
+      },
     },
     {
       path: '/purchase/:productKey',
       name: 'purchase-product',
       component: PurchaseProductView,
-      meta: { featureKey: 'payment' },
+      meta: {
+        featureKey: 'payment',
+        title: '商品详情 - Team Helper',
+        description: '查看商品详情、下单说明和实时状态。',
+        robots: 'noindex,follow',
+      },
     },
     {
       path: '/order',
       name: 'order',
       component: OrderView,
-      meta: { featureKey: 'payment' },
+      meta: {
+        featureKey: 'payment',
+        title: '订单查询 - Team Helper',
+        description: '查询 Team Helper 订单状态与处理结果。',
+        robots: 'noindex,nofollow',
+      },
     },
     {
       path: '/login',
       name: 'login',
       component: LoginView,
+      meta: {
+        title: '登录 - Team Helper',
+        description: '登录 Team Helper 后台。',
+        robots: 'noindex,nofollow',
+      },
     },
     {
       path: '/register',
       name: 'register',
       component: RegisterView,
+      meta: {
+        title: '注册 - Team Helper',
+        description: '注册 Team Helper 账号。',
+        robots: 'noindex,nofollow',
+      },
     },
     {
       path: '/redeem/common',
@@ -246,8 +341,23 @@ const router = createRouter({
           path: 'feature-disabled/:feature',
           name: 'admin-feature-disabled',
           component: FeatureDisabledView,
+          meta: {
+            title: '后台功能未启用 - Team Helper',
+            description: '后台功能当前未启用。',
+            robots: 'noindex,nofollow',
+          },
         },
       ]
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFoundView,
+      meta: {
+        title: '页面不存在 - Team Helper',
+        description: '你访问的页面不存在，可以返回首页继续查看公开页面和商品入口。',
+        robots: 'noindex,nofollow',
+      },
     },
   ],
 })
