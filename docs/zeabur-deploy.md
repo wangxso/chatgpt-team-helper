@@ -68,6 +68,6 @@ INIT_ADMIN_PASSWORD=你的管理员密码
 
 - **邮件通知**：`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` 等
 - **Telegram 机器人**：`TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USER_IDS` 等
-- **支付功能**：`ZPAY_BASE_URL`, `ZPAY_PID`, `ZPAY_KEY` 等
+- **支付功能**：`ZPAY_GATEWAY`, `ZPAY_BASE_URL`, `ZPAY_PID`, `ZPAY_KEY` 等
 
 详见项目 [README](https://github.com/Kylsky/chatgpt-team-helper)。
