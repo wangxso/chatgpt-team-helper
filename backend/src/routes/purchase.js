@@ -516,17 +516,15 @@ const getTodayAvailableCodeCount = (db, { channel } = {}) => {
   const resolvedChannel = String(channel || CODE_CHANNEL_COMMON).trim().toLowerCase() || CODE_CHANNEL_COMMON
   const result = db.exec(
     `
-	      SELECT COUNT(*)
-	      FROM redemption_codes rc
-	      JOIN gpt_accounts ga ON lower(trim(ga.email)) = lower(trim(rc.account_email))
-	      WHERE rc.is_redeemed = 0
-	        AND COALESCE(NULLIF(lower(trim(rc.channel)), ''), 'common') = ?
-	        AND rc.account_email IS NOT NULL
-        AND ga.is_open = 1
-        AND ga.user_count < 6
-        AND DATE(ga.created_at) = DATE('now', 'localtime')
+      SELECT COUNT(*)
+      FROM redemption_codes rc
+      WHERE rc.is_redeemed = 0
+        AND COALESCE(NULLIF(lower(trim(rc.channel)), ''), 'common') = ?
+        AND rc.account_email IS NOT NULL
+        AND TRIM(rc.account_email) != ''
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
+        AND DATE(rc.created_at) = DATE('now', 'localtime')
     `,
     [resolvedChannel]
   )
