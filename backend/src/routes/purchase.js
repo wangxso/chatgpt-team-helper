@@ -512,7 +512,7 @@ const cleanupExpiredOrders = (db, { expireMinutes }) => {
   return released
 }
 
-const getTodayAvailableCodeCount = (db, { channel } = {}) => {
+export const getTodayAvailableCodeCount = (db, { channel } = {}) => {
   const resolvedChannel = String(channel || CODE_CHANNEL_COMMON).trim().toLowerCase() || CODE_CHANNEL_COMMON
   const result = db.exec(
     `
@@ -531,19 +531,17 @@ const getTodayAvailableCodeCount = (db, { channel } = {}) => {
   return Number(result[0]?.values?.[0]?.[0] || 0)
 }
 
-const reserveTodayCode = (db, { orderNo, email, channel } = {}) => {
+export const reserveTodayCode = (db, { orderNo, email, channel } = {}) => {
   const resolvedChannel = String(channel || CODE_CHANNEL_COMMON).trim().toLowerCase() || CODE_CHANNEL_COMMON
   const row = db.exec(
     `
 	      SELECT rc.id, rc.code, rc.account_email
 	      FROM redemption_codes rc
-	      JOIN gpt_accounts ga ON lower(trim(ga.email)) = lower(trim(rc.account_email))
 	      WHERE rc.is_redeemed = 0
 	        AND COALESCE(NULLIF(lower(trim(rc.channel)), ''), 'common') = ?
 	        AND rc.account_email IS NOT NULL
-        AND ga.is_open = 1
-        AND ga.user_count < 6
-        AND DATE(ga.created_at) = DATE('now', 'localtime')
+        AND TRIM(rc.account_email) != ''
+        AND DATE(rc.created_at) = DATE('now', 'localtime')
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
       ORDER BY rc.created_at ASC
@@ -568,6 +566,9 @@ const reserveTodayCode = (db, { orderNo, email, channel } = {}) => {
     `,
     [orderNo, email, codeId]
   )
+
+  const rowsModified = typeof db.getRowsModified === 'function' ? db.getRowsModified() : null
+  if (rowsModified === 0) return null
 
   return { codeId, code, accountEmail }
 }
