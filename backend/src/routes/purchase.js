@@ -249,6 +249,8 @@ const getPurchasePlans = () => {
 
 const getPurchaseOrderExpireMinutes = () => Math.max(5, toInt(process.env.PURCHASE_ORDER_EXPIRE_MINUTES, 15))
 
+const getMaxUnpaidOrdersPerEmail = () => Math.max(1, toInt(process.env.MAX_UNPAID_ORDERS_PER_EMAIL, 1))
+
 const parseProductCodeChannels = (product, channelsByKey) => {
   const { list } = normalizeCodeChannels(product?.codeChannels)
   const resolved = []
@@ -524,7 +526,6 @@ export const getTodayAvailableCodeCount = (db, { channel } = {}) => {
         AND TRIM(rc.account_email) != ''
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
-        AND DATE(rc.created_at) = DATE('now', 'localtime')
     `,
     [resolvedChannel]
   )
@@ -541,7 +542,6 @@ export const reserveTodayCode = (db, { orderNo, email, channel } = {}) => {
 	        AND COALESCE(NULLIF(lower(trim(rc.channel)), ''), 'common') = ?
 	        AND rc.account_email IS NOT NULL
         AND TRIM(rc.account_email) != ''
-        AND DATE(rc.created_at) = DATE('now', 'localtime')
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
       ORDER BY rc.created_at ASC
@@ -1266,6 +1266,28 @@ router.post('/orders', async (req, res) => {
 
     const reservation = await withLocks(['purchase'], async () => {
       cleanupExpiredOrders(db, { expireMinutes: getPurchaseOrderExpireMinutes() })
+
+      // 限制同一个邮箱最多N个未支付订单，防止恶意占用库存
+      const maxUnpaidPerEmail = getMaxUnpaidOrdersPerEmail()
+      if (maxUnpaidPerEmail > 0) {
+        const unpaidResult = db.exec(
+          `
+            SELECT COUNT(*)
+            FROM purchase_orders
+            WHERE email = ?
+              AND status IN ('created', 'pending_payment')
+          `,
+          [email]
+        )
+        const unpaidCount = Number(unpaidResult[0]?.values?.[0]?.[0] || 0)
+        if (unpaidCount >= maxUnpaidPerEmail) {
+          return {
+            ok: false,
+            status: 429,
+            error: `您已有 ${unpaidCount} 个待支付订单，请支付完成或等待超时后再下单`
+          }
+        }
+      }
 
       const { byKey: channelsByKey } = await getChannels(db)
       let product = null
