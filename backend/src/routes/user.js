@@ -199,7 +199,6 @@ const getTodayCommonCodeCount = (db) => {
 	      JOIN gpt_accounts ga ON lower(trim(ga.email)) = lower(trim(rc.account_email))
 	      WHERE rc.is_redeemed = 0
 	        AND rc.channel = 'common'
-	        AND DATE(rc.created_at) = DATE('now', 'localtime')
         AND (rc.reserved_for_uid IS NULL OR TRIM(rc.reserved_for_uid) = '')
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
@@ -216,7 +215,6 @@ const pickTodayCommonCode = (db) => {
 	      JOIN gpt_accounts ga ON lower(trim(ga.email)) = lower(trim(rc.account_email))
 	      WHERE rc.is_redeemed = 0
 	        AND rc.channel = 'common'
-	        AND DATE(rc.created_at) = DATE('now', 'localtime')
         AND (rc.reserved_for_uid IS NULL OR TRIM(rc.reserved_for_uid) = '')
         AND (rc.reserved_for_order_no IS NULL OR rc.reserved_for_order_no = '')
         AND (rc.reserved_for_entry_id IS NULL OR rc.reserved_for_entry_id = 0)
